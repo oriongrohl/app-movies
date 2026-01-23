@@ -1,0 +1,12 @@
+<p>home-page works!</p>
+<div *ngIf="loading$ | async" class="spinner">Cargando...</div>
+<div *ngIf="error$ | async as error" class="error">{{ error }}</div>
+
+<div class="movies-grid">
+    <div *ngFor="let movie of movies$ | async" class="movie-card">
+        <img [src]="'https://image.tmdb.org/t/p/w500' + movie.poster_path" 
+            [alt]="movie.title">
+        <h3>{{ movie.title }}</h3>
+        <p>⭐ {{ movie.vote_average }}</p>
+    </div>
+</div>
