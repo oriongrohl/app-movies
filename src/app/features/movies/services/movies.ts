@@ -1,6 +1,7 @@
-import { HttpClient } from "@angular/common/http";
-import { Injectable } from "@angular/core";
+import { HttpClient, HttpParams } from "@angular/common/http";
+import { inject, Injectable } from "@angular/core";
 import { Movie, MoviesResponse } from "../interfaces/movies-interface";
+import { Observable } from "rxjs";
 
 @Injectable ({
     providedIn: 'root'
@@ -9,35 +10,28 @@ export class MoviesService {
     public listadoMovies: Movie[] = [];
     private readonly baseUrl = 'https://api.themoviedb.org/3';
     private apiKey: string = '414e33485527832fe1033c99b37a827a'
+    
+    private http = inject(HttpClient); //injecto el HttpClient servicio como una dependencia
     private currentPage = 1;
     private readonly MAX_PAGES = 500;
 
 
-    constructor( private http: HttpClient){}
-
     loadMovies() {
-    if (this.currentPage > this.MAX_PAGES) return;
+        this.getMovies(this.currentPage).subscribe((response) => {
+            this.listadoMovies = response.results;
+        });
+    }
 
-    this.http.get<MoviesResponse>(
-      `${this.baseUrl}/discover/movie`,
-      {
-        params: {
-          api_key: this.apiKey,
-          page: this.currentPage
-        }
-      }
-    ).subscribe({
-      next: (response) => {
-        this.listadoMovies = [
-          ...this.listadoMovies,
-          ...response.results
-        ];
-        this.currentPage++;
-      },
-      error: (err) => {
-        console.error('Error cargando películas', err);
-      }
-    });
-  }
+    getMovies(page: number): Observable<MoviesResponse> {
+        return this.http.get<MoviesResponse>(`/api/movies?page=${page}`);
+    }
 
+    getMovieDetails(id: number) {
+        return this.http.get(`${this.baseUrl}/movie/${id}?api_key=${this.apiKey}&language=es-MX`);
+    }
+
+    searchMovies(query: string, page: number) {
+        return this.http.get(`${this.baseUrl}/search/movie?api_key=${this.apiKey}&language=es-MX&query=${query}&page=${page}`);
+    }
 }
+

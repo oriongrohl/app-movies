@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import { MoviesService } from '../../services/movies';
 import { Movie } from '../../interfaces/movies-interface';
+import { AsyncPipe } from '@angular/common';
 
 
 @Component({
   selector: 'app-home-page',
-  imports: [],
+  imports: [AsyncPipe], // PARA PODER USAR EL ASYNC PIPE EN EL HTML
   templateUrl: './home-page.html',
   styleUrl: './home-page.css',
 })
