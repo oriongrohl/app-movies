@@ -1,0 +1,39 @@
+.not-found-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+}
+
+.not-found-card {
+  text-align: center;
+  color: white;
+  padding: 48px;
+}
+
+.error-icon {
+  font-size: 80px;
+  width: 80px;
+  height: 80px;
+  color: #e50914;
+  margin-bottom: 16px;
+}
+
+h1 {
+  font-size: 96px;
+  font-weight: 700;
+  margin: 0;
+  color: #e50914;
+  line-height: 1;
+}
+
+h2 {
+  font-size: 28px;
+  margin: 8px 0 16px;
+}
+
+p {
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 32px;
+}

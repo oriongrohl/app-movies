@@ -1,0 +1,41 @@
+.home-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.search-bar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.search-field {
+  flex: 1;
+}
+
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  padding: 64px 0;
+}
+
+.error-msg {
+  color: #e50914;
+  text-align: center;
+  font-size: 16px;
+}
+
+.movies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.no-results {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #888;
+  font-size: 16px;
+  padding: 48px 0;
+}

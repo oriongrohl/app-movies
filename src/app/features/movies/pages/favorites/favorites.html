@@ -1,0 +1,43 @@
+<div class="favorites-container">
+  <h2 class="page-title">
+    <mat-icon>favorite</mat-icon>
+    Mis películas favoritas
+  </h2>
+
+  @if (loading()) {
+    <div class="spinner-container">
+      <mat-spinner></mat-spinner>
+    </div>
+  }
+
+  @if (!loading() && favoriteMovies().length === 0) {
+    <div class="empty-state">
+      <mat-icon>movie_filter</mat-icon>
+      <p>No tienes películas favoritas todavía.</p>
+      <a mat-raised-button color="primary" routerLink="/movies">Buscar películas</a>
+    </div>
+  }
+
+  @if (!loading() && favoriteMovies().length > 0) {
+    <mat-list>
+      @for (movie of favoriteMovies(); track movie.id) {
+        <mat-list-item class="favorite-item">
+          <mat-icon matListItemIcon color="warn">favorite</mat-icon>
+          <div matListItemTitle class="movie-info">
+            <a [routerLink]="['/movies', movie.id]" class="movie-link">
+              {{ movie.title }}
+            </a>
+            <span class="movie-year">{{ movie.release_date | slice:0:4 }}</span>
+            <span class="movie-rating">⭐ {{ movie.vote_average.toFixed(1) }}</span>
+          </div>
+          <button mat-icon-button color="warn" matListItemMeta
+                  (click)="confirmRemove(movie)"
+                  aria-label="Eliminar de favoritos">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </mat-list-item>
+        <mat-divider></mat-divider>
+      }
+    </mat-list>
+  }
+</div>

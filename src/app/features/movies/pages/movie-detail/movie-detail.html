@@ -1,0 +1,60 @@
+@if (loading()) {
+  <div class="spinner-container">
+    <mat-spinner></mat-spinner>
+  </div>
+}
+
+@if (error()) {
+  <div class="error-container">
+    <mat-icon>error_outline</mat-icon>
+    <p>{{ error() }}</p>
+    <button mat-raised-button color="primary" (click)="goBack()">Volver</button>
+  </div>
+}
+
+@if (movie(); as m) {
+  <div class="detail-container">
+    <div class="backdrop" [style.backgroundImage]="'url(' + imageBase + m.backdrop_path + ')'">
+      <div class="backdrop-overlay"></div>
+    </div>
+
+    <div class="detail-content">
+      <button mat-icon-button class="back-btn" (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+
+      <div class="detail-main">
+        <img class="poster" [src]="posterBase + m.poster_path" [alt]="m.title" />
+
+        <div class="info">
+          <h1 class="title">{{ m.title }}</h1>
+          @if (m.tagline) {
+            <p class="tagline">{{ m.tagline }}</p>
+          }
+
+          <div class="chips-row">
+            @for (genre of m.genres; track genre.id) {
+              <mat-chip>{{ genre.name }}</mat-chip>
+            }
+          </div>
+
+          <div class="meta-row">
+            <span><mat-icon>star</mat-icon> {{ m.vote_average.toFixed(1) }} / 10</span>
+            <span><mat-icon>calendar_today</mat-icon> {{ m.release_date | slice:0:4 }}</span>
+            <span><mat-icon>schedule</mat-icon> {{ getRuntime() }}</span>
+          </div>
+
+          <p class="overview">{{ m.overview }}</p>
+
+          <button mat-raised-button
+                  [color]="isFavorite ? 'warn' : 'primary'"
+                  (click)="toggleFavorite()"
+                  class="fav-btn">
+            <mat-icon>{{ isFavorite ? 'favorite' : 'favorite_border' }}</mat-icon>
+            {{ isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

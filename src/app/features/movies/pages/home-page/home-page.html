@@ -1,12 +1,42 @@
-<p>home-page works!</p>
-<div *ngIf="loading$ | async" class="spinner">Cargando...</div>
-<div *ngIf="error$ | async as error" class="error">{{ error }}</div>
+<div class="home-container">
 
-<div class="movies-grid">
-    <div *ngFor="let movie of movies$ | async" class="movie-card">
-        <img [src]="'https://image.tmdb.org/t/p/w500' + movie.poster_path" 
-            [alt]="movie.title">
-        <h3>{{ movie.title }}</h3>
-        <p>⭐ {{ movie.vote_average }}</p>
+  <div class="search-bar">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Buscar película...</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
+             (keyup.enter)="onSearch()" />
+      @if (searchQuery()) {
+        <button mat-icon-button matSuffix (click)="clearSearch()">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+    <button mat-raised-button color="primary" (click)="onSearch()">Buscar</button>
+  </div>
+
+  @if (moviesService.loading()) {
+    <div class="spinner-container">
+      <mat-spinner></mat-spinner>
     </div>
+  }
+
+  @if (moviesService.error()) {
+    <p class="error-msg">{{ moviesService.error() }}</p>
+  }
+
+  @if (!moviesService.loading()) {
+    <div class="movies-grid">
+      @for (movie of moviesService.movies(); track movie.id) {
+        <app-movie-card
+          [movie]="movie"
+          [isFavorite]="isFavorite(movie)"
+          (toggleFavorite)="toggleFavorite($event)" />
+      }
+      @if (moviesService.movies().length === 0) {
+        <p class="no-results">No se encontraron películas.</p>
+      }
+    </div>
+  }
+
 </div>

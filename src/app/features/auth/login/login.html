@@ -1,0 +1,75 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-logo">
+      <mat-icon>movie</mat-icon>
+      <h1>CineApp</h1>
+    </div>
+
+    @if (step() === 'username') {
+      <form [formGroup]="usernameForm" (ngSubmit)="submitUsername()">
+        <p class="login-subtitle">Introduce tu usuario para continuar</p>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Usuario</mat-label>
+          <mat-icon matPrefix>person</mat-icon>
+          <input matInput formControlName="username" autocomplete="username" />
+          @if (usernameForm.get('username')?.hasError('required')) {
+            <mat-error>El usuario es obligatorio</mat-error>
+          }
+          @if (usernameForm.get('username')?.hasError('minlength')) {
+            <mat-error>Mínimo 3 caracteres</mat-error>
+          }
+        </mat-form-field>
+
+        <button mat-raised-button color="primary" type="submit"
+                class="full-width" [disabled]="usernameForm.invalid">
+          Siguiente
+        </button>
+      </form>
+    }
+
+    @if (step() === 'loading') {
+      <div class="loading-step">
+        <mat-spinner diameter="48"></mat-spinner>
+        <p>Comprobando usuario...</p>
+      </div>
+    }
+
+    @if (step() === 'password') {
+      <form [formGroup]="passwordForm" (ngSubmit)="submitPassword()">
+        <p class="login-subtitle">
+          <strong>{{ usernameForm.value.username }}</strong>
+        </p>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Contraseña</mat-label>
+          <mat-icon matPrefix>lock</mat-icon>
+          <input matInput formControlName="password"
+                 [type]="hidePassword() ? 'password' : 'text'"
+                 autocomplete="current-password" />
+          <button mat-icon-button matSuffix type="button"
+                  (click)="hidePassword.set(!hidePassword())">
+            <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          @if (passwordForm.get('password')?.hasError('required')) {
+            <mat-error>La contraseña es obligatoria</mat-error>
+          }
+        </mat-form-field>
+
+        @if (errorMsg()) {
+          <p class="error-msg">{{ errorMsg() }}</p>
+        }
+
+        <button mat-raised-button color="primary" type="submit"
+                class="full-width" [disabled]="passwordForm.invalid">
+          Iniciar sesión
+        </button>
+
+        <button mat-button type="button" class="full-width back-btn"
+                (click)="backToUsername()">
+          ← Cambiar usuario
+        </button>
+      </form>
+    }
+  </div>
+</div>

@@ -1,0 +1,29 @@
+<mat-card class="movie-card" [routerLink]="['/movies', movie().id]">
+  <img mat-card-image [src]="getImageUrl()" [alt]="movie().title" class="poster" />
+
+  <mat-card-content>
+    <h3 class="movie-title">{{ movie().title }}</h3>
+    <div class="movie-meta">
+      <mat-chip class="rating-chip">
+        <mat-icon>star</mat-icon>
+        {{ getRating() }}
+      </mat-chip>
+      <span class="release-year">
+        {{ movie().release_date | slice:0:4 }}
+      </span>
+    </div>
+    <p class="overview">{{ movie().overview | slice:0:120 }}{{ movie().overview.length > 120 ? '...' : '' }}</p>
+  </mat-card-content>
+
+  <mat-card-actions>
+    <button mat-icon-button
+            [color]="isFavorite() ? 'warn' : ''"
+            (click)="onToggleFavorite($event)"
+            [attr.aria-label]="isFavorite() ? 'Quitar de favoritos' : 'Añadir a favoritos'">
+      <mat-icon>{{ isFavorite() ? 'favorite' : 'favorite_border' }}</mat-icon>
+    </button>
+    <button mat-button [routerLink]="['/movies', movie().id]" color="primary">
+      Ver ficha
+    </button>
+  </mat-card-actions>
+</mat-card>
