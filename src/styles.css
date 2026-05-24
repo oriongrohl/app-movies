@@ -1,2 +1,27 @@
-/* You can add global styles to this file, and also import other style files */
-@import "@angular/material/prebuilt-themes/rose-red.css";
+@import "@angular/material/prebuilt-themes/indigo-pink.css";
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  background: #f5f5f5;
+  color: #333;
+}
+
+/* Forzar fuente Roboto en todos los elementos Material */
+.mat-typography, .mat-mdc-card, .mat-mdc-button,
+.mat-mdc-form-field, .mat-mdc-list-item,
+.mat-toolbar, mat-sidenav {
+  font-family: 'Roboto', sans-serif !important;
+}
+
+/* Scrollbar más limpia */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #bbb; border-radius: 3px; }

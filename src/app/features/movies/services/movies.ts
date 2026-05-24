@@ -1,67 +1,151 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { inject, Injectable, signal, computed } from '@angular/core';
-import { Movie, MovieDetails, MoviesResponse } from '../interfaces/movies-interface';
+import { inject, Injectable, signal } from '@angular/core';
+import {
+  Movie, MovieDetails, MovieCredits, MovieKeywords,
+  MoviesResponse, Genre, PersonSearchResponse
+} from '../interfaces/movies-interface';
 import { environment } from '../../../../environments/environment';
+import { Observable, forkJoin, of } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
+
+export interface MovieSection {
+  title: string;
+  movies: Movie[];
+}
+
+export interface SearchFilters {
+  title?: string;
+  genreId?: number;
+  directorName?: string;
+  actorName?: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class MoviesService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = environment.tmdbBaseUrl;
-  private readonly apiKey = environment.tmdbApiKey;
+  private readonly base = environment.tmdbBaseUrl;
+  private readonly key = environment.tmdbApiKey;
+  private readonly lang = 'es-ES';
 
-  movies = signal<Movie[]>([]);
-  loading = signal(false);
-  error = signal<string | null>(null);
-  currentPage = signal(1);
-  totalPages = signal(1);
-  searchQuery = signal('');
+  movies    = signal<Movie[]>([]);
+  sections  = signal<MovieSection[]>([]);
+  genres    = signal<Genre[]>([]);
+  loading   = signal(false);
+  error     = signal<string | null>(null);
+  searchMode = signal(false);
 
-  hasMore = computed(() => this.currentPage() < this.totalPages());
+  private p(extra: Record<string, string | number> = {}): HttpParams {
+    let p = new HttpParams().set('api_key', this.key).set('language', this.lang);
+    Object.entries(extra).forEach(([k, v]) => (p = p.set(k, String(v))));
+    return p;
+  }
 
-  loadPopular(page = 1): void {
+  // ── Home: 4 secciones ──────────────────────────────────────────
+  loadHome(): void {
     this.loading.set(true);
     this.error.set(null);
-    this.http.get<MoviesResponse>(`/api/movies?page=${page}`).subscribe({
-      next: res => {
-        this.movies.set(res.results);
-        this.currentPage.set(res.page ?? page);
-        this.totalPages.set(res.total_pages);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set('Error al cargar las películas');
-        this.loading.set(false);
-      },
+    this.searchMode.set(false);
+
+    const endpoints = [
+      { title: 'Tendencias hoy',  url: `${this.base}/trending/movie/day` },
+      { title: 'Populares',        url: `${this.base}/movie/popular` },
+      { title: 'Mejor valoradas', url: `${this.base}/movie/top_rated` },
+      { title: 'En cines',         url: `${this.base}/movie/now_playing` },
+    ];
+
+    const results: MovieSection[] = [];
+    let done = 0;
+
+    endpoints.forEach(({ title, url }) => {
+      this.http.get<MoviesResponse>(url, { params: this.p() }).subscribe({
+        next: res => {
+          results.push({ title, movies: res.results.slice(0, 20) });
+          if (++done === endpoints.length) {
+            this.sections.set(endpoints.map(e => results.find(r => r.title === e.title)!));
+            this.loading.set(false);
+          }
+        },
+        error: () => {
+          if (++done === endpoints.length) {
+            this.sections.set(results);
+            if (!results.length) this.error.set('Error al cargar las películas');
+            this.loading.set(false);
+          }
+        },
+      });
     });
   }
 
-  searchMovies(query: string, page = 1): void {
+  // ── Géneros ────────────────────────────────────────────────────
+  loadGenres(): void {
+    if (this.genres().length) return;
+    this.http.get<{ genres: Genre[] }>(`${this.base}/genre/movie/list`, { params: this.p() })
+      .subscribe({ next: r => this.genres.set(r.genres), error: () => {} });
+  }
+
+  // ── Búsqueda avanzada ──────────────────────────────────────────
+  search(filters: SearchFilters): void {
     this.loading.set(true);
     this.error.set(null);
-    this.searchQuery.set(query);
-    const params = new HttpParams()
-      .set('api_key', this.apiKey)
-      .set('language', 'es-ES')
-      .set('query', query)
-      .set('page', page);
-    this.http.get<MoviesResponse>(`${this.baseUrl}/search/movie`, { params }).subscribe({
-      next: res => {
-        this.movies.set(res.results);
-        this.currentPage.set(res.page ?? page);
-        this.totalPages.set(res.total_pages);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set('Error al buscar películas');
-        this.loading.set(false);
-      },
+    this.searchMode.set(true);
+
+    // Si hay título y solo título → searchMovies directo
+    if (filters.title && !filters.genreId && !filters.directorName && !filters.actorName) {
+      this.http.get<MoviesResponse>(`${this.base}/search/movie`, {
+        params: this.p({ query: filters.title }),
+      }).subscribe({
+        next: res => { this.movies.set(res.results); this.loading.set(false); },
+        error: () => { this.error.set('Error al buscar'); this.loading.set(false); },
+      });
+      return;
+    }
+
+    // Resolver IDs de persona (director y/o actor en paralelo)
+    const directorId$ = filters.directorName
+      ? this.findPerson(filters.directorName, 'Directing')
+      : of(null);
+    const actorId$ = filters.actorName
+      ? this.findPerson(filters.actorName, 'Acting')
+      : of(null);
+
+    forkJoin([directorId$, actorId$]).pipe(
+      switchMap(([directorId, actorId]) => {
+        let params = this.p({ sort_by: 'popularity.desc' });
+        if (filters.genreId)  params = params.set('with_genres', filters.genreId);
+        if (directorId)       params = params.set('with_crew',   directorId);
+        if (actorId)          params = params.set('with_cast',   actorId);
+        // Título combinado con discover (filtro de texto TMDB)
+        if (filters.title)    params = params.set('with_text_query', filters.title);
+        return this.http.get<MoviesResponse>(`${this.base}/discover/movie`, { params });
+      })
+    ).subscribe({
+      next: res => { this.movies.set(res.results); this.loading.set(false); },
+      error: () => { this.error.set('Error en la búsqueda'); this.loading.set(false); },
     });
   }
 
-  getMovieDetails(id: number) {
-    const params = new HttpParams()
-      .set('api_key', this.apiKey)
-      .set('language', 'es-ES');
-    return this.http.get<MovieDetails>(`${this.baseUrl}/movie/${id}`, { params });
+  private findPerson(name: string, department: string): Observable<number | null> {
+    return this.http.get<PersonSearchResponse>(`${this.base}/search/person`, {
+      params: this.p({ query: name }),
+    }).pipe(
+      map(res => {
+        const match = res.results.find(p => p.known_for_department === department)
+          ?? res.results[0];
+        return match ? match.id : null;
+      })
+    );
+  }
+
+  // ── Detalle / créditos / keywords ─────────────────────────────
+  getMovieDetails(id: number): Observable<MovieDetails> {
+    return this.http.get<MovieDetails>(`${this.base}/movie/${id}`, { params: this.p() });
+  }
+
+  getMovieCredits(id: number): Observable<MovieCredits> {
+    return this.http.get<MovieCredits>(`${this.base}/movie/${id}/credits`, { params: this.p() });
+  }
+
+  getMovieKeywords(id: number): Observable<MovieKeywords> {
+    return this.http.get<MovieKeywords>(`${this.base}/movie/${id}/keywords`, { params: this.p() });
   }
 }

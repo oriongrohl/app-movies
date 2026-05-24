@@ -1,42 +1,177 @@
 <div class="home-container">
 
+  <!-- ── Barra de búsqueda principal ── -->
   <div class="search-bar">
     <mat-form-field appearance="outline" class="search-field">
-      <mat-label>Buscar película...</mat-label>
+      <mat-label>Buscar por título...</mat-label>
       <mat-icon matPrefix>search</mat-icon>
-      <input matInput [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
-             (keyup.enter)="onSearch()" />
-      @if (searchQuery()) {
-        <button mat-icon-button matSuffix (click)="clearSearch()">
+      <input matInput
+             [ngModel]="titleQuery()"
+             (ngModelChange)="titleQuery.set($event)"
+             (keyup.enter)="search()" />
+      @if (titleQuery()) {
+        <button mat-icon-button matSuffix (click)="titleQuery.set(''); search()">
           <mat-icon>close</mat-icon>
         </button>
       }
     </mat-form-field>
-    <button mat-raised-button color="primary" (click)="onSearch()">Buscar</button>
+
+    <button mat-raised-button color="primary" (click)="search()">
+      <mat-icon>search</mat-icon>
+      Buscar
+    </button>
+
+    <button mat-stroked-button
+            [color]="filtersOpen() ? 'primary' : ''"
+            (click)="toggleFilters()"
+            matTooltip="Filtros avanzados">
+      <mat-icon>tune</mat-icon>
+      Filtros
+      @if (hasActiveFilters()) {
+        <span class="filter-badge">!</span>
+      }
+    </button>
   </div>
 
-  @if (moviesService.loading()) {
-    <div class="spinner-container">
-      <mat-spinner></mat-spinner>
+  <!-- ── Panel de filtros avanzados ── -->
+  @if (filtersOpen()) {
+    <div class="filters-panel">
+      <!-- Género -->
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>Género</mat-label>
+        <mat-icon matPrefix>local_movies</mat-icon>
+        <mat-select [ngModel]="selectedGenre()" (ngModelChange)="selectedGenre.set($event)">
+          <mat-option [value]="null">Todos los géneros</mat-option>
+          @for (genre of moviesService.genres(); track genre.id) {
+            <mat-option [value]="genre.id">{{ genre.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Director -->
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>Director</mat-label>
+        <mat-icon matPrefix>movie_creation</mat-icon>
+        <input matInput
+               [ngModel]="directorQuery()"
+               (ngModelChange)="directorQuery.set($event)"
+               (keyup.enter)="search()"
+               placeholder="ej: Christopher Nolan" />
+        @if (directorQuery()) {
+          <button mat-icon-button matSuffix (click)="directorQuery.set('')">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+
+      <!-- Actor -->
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>Actor / Actriz</mat-label>
+        <mat-icon matPrefix>person</mat-icon>
+        <input matInput
+               [ngModel]="actorQuery()"
+               (ngModelChange)="actorQuery.set($event)"
+               (keyup.enter)="search()"
+               placeholder="ej: Meryl Streep" />
+        @if (actorQuery()) {
+          <button mat-icon-button matSuffix (click)="actorQuery.set('')">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+
+      <!-- Acciones del panel -->
+      <div class="filter-actions">
+        <button mat-raised-button color="primary" (click)="search()">
+          <mat-icon>search</mat-icon> Aplicar filtros
+        </button>
+        <button mat-button color="warn" (click)="clearAll()">
+          <mat-icon>clear_all</mat-icon> Limpiar todo
+        </button>
+      </div>
     </div>
   }
 
+  <!-- ── Chips de filtros activos ── -->
+  @if (hasActiveFilters() && moviesService.searchMode()) {
+    <div class="active-filters">
+      @if (titleQuery()) {
+        <mat-chip (removed)="removeFilter('title')">
+          <mat-icon matChipAvatar>title</mat-icon>
+          "{{ titleQuery() }}"
+          <button matChipRemove><mat-icon>cancel</mat-icon></button>
+        </mat-chip>
+      }
+      @if (selectedGenre()) {
+        <mat-chip (removed)="removeFilter('genre')">
+          <mat-icon matChipAvatar>local_movies</mat-icon>
+          {{ genreName(selectedGenre()) }}
+          <button matChipRemove><mat-icon>cancel</mat-icon></button>
+        </mat-chip>
+      }
+      @if (directorQuery()) {
+        <mat-chip (removed)="removeFilter('director')">
+          <mat-icon matChipAvatar>movie_creation</mat-icon>
+          Dir: {{ directorQuery() }}
+          <button matChipRemove><mat-icon>cancel</mat-icon></button>
+        </mat-chip>
+      }
+      @if (actorQuery()) {
+        <mat-chip (removed)="removeFilter('actor')">
+          <mat-icon matChipAvatar>person</mat-icon>
+          Actor: {{ actorQuery() }}
+          <button matChipRemove><mat-icon>cancel</mat-icon></button>
+        </mat-chip>
+      }
+    </div>
+  }
+
+  <!-- ── Spinner ── -->
+  @if (moviesService.loading()) {
+    <div class="spinner-container">
+      <mat-spinner diameter="56"></mat-spinner>
+      <p class="loading-text">Buscando películas...</p>
+    </div>
+  }
+
+  <!-- ── Error ── -->
   @if (moviesService.error()) {
     <p class="error-msg">{{ moviesService.error() }}</p>
   }
 
-  @if (!moviesService.loading()) {
-    <div class="movies-grid">
-      @for (movie of moviesService.movies(); track movie.id) {
-        <app-movie-card
-          [movie]="movie"
-          [isFavorite]="isFavorite(movie)"
-          (toggleFavorite)="toggleFavorite($event)" />
-      }
-      @if (moviesService.movies().length === 0) {
-        <p class="no-results">No se encontraron películas.</p>
-      }
+  <!-- ── Resultados de búsqueda: grid ── -->
+  @if (!moviesService.loading() && moviesService.searchMode()) {
+    <div class="search-results">
+      <h2 class="section-title">
+        {{ moviesService.movies().length }} resultado{{ moviesService.movies().length !== 1 ? 's' : '' }}
+      </h2>
+      <div class="movies-grid">
+        @for (movie of moviesService.movies(); track movie.id) {
+          <app-movie-card [movie]="movie" [isFavorite]="isFavorite(movie)"
+                          (toggleFavorite)="toggleFavorite($event)" />
+        }
+        @if (moviesService.movies().length === 0) {
+          <p class="no-results">No se encontraron películas con esos filtros.</p>
+        }
+      </div>
     </div>
+  }
+
+  <!-- ── Home: secciones tipo Netflix ── -->
+  @if (!moviesService.loading() && !moviesService.searchMode()) {
+    @for (section of moviesService.sections(); track section.title) {
+      <div class="movie-section">
+        <h2 class="section-title">{{ section.title }}</h2>
+        <div class="movie-row">
+          @for (movie of section.movies; track movie.id) {
+            <div class="row-card">
+              <app-movie-card [movie]="movie" [isFavorite]="isFavorite(movie)"
+                              (toggleFavorite)="toggleFavorite($event)" />
+            </div>
+          }
+        </div>
+      </div>
+    }
   }
 
 </div>

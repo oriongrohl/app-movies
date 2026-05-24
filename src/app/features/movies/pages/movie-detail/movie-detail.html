@@ -1,7 +1,5 @@
 @if (loading()) {
-  <div class="spinner-container">
-    <mat-spinner></mat-spinner>
-  </div>
+  <div class="spinner-container"><mat-spinner diameter="60"></mat-spinner></div>
 }
 
 @if (error()) {
@@ -13,48 +11,103 @@
 }
 
 @if (movie(); as m) {
-  <div class="detail-container">
-    <div class="backdrop" [style.backgroundImage]="'url(' + imageBase + m.backdrop_path + ')'">
-      <div class="backdrop-overlay"></div>
-    </div>
 
-    <div class="detail-content">
-      <button mat-icon-button class="back-btn" (click)="goBack()">
+  <!-- ── HERO ── -->
+  <div class="hero"
+    [style.backgroundImage]="m.backdrop_path ? 'url(' + imageBase + m.backdrop_path + ')' : 'none'">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <button mat-icon-button class="back-btn" (click)="goBack()" matTooltip="Volver">
         <mat-icon>arrow_back</mat-icon>
       </button>
 
-      <div class="detail-main">
-        <img class="poster" [src]="posterBase + m.poster_path" [alt]="m.title" />
+      <div class="hero-main">
+        <img class="poster"
+          [src]="m.poster_path ? posterBase + m.poster_path : 'https://placehold.co/300x450?text=Sin+imagen'"
+          [alt]="m.title" />
 
-        <div class="info">
+        <div class="movie-info">
           <h1 class="title">{{ m.title }}</h1>
-          @if (m.tagline) {
-            <p class="tagline">{{ m.tagline }}</p>
-          }
+          @if (m.tagline) { <p class="tagline">"{{ m.tagline }}"</p> }
 
-          <div class="chips-row">
-            @for (genre of m.genres; track genre.id) {
-              <mat-chip>{{ genre.name }}</mat-chip>
-            }
+          <div class="meta">
+            <span class="meta-item"><mat-icon>star</mat-icon><strong>{{ m.vote_average.toFixed(1) }}</strong>/10</span>
+            <span class="meta-item"><mat-icon>calendar_today</mat-icon>{{ m.release_date | slice:0:4 }}</span>
+            <span class="meta-item"><mat-icon>schedule</mat-icon>{{ getRuntime() }}</span>
           </div>
 
-          <div class="meta-row">
-            <span><mat-icon>star</mat-icon> {{ m.vote_average.toFixed(1) }} / 10</span>
-            <span><mat-icon>calendar_today</mat-icon> {{ m.release_date | slice:0:4 }}</span>
-            <span><mat-icon>schedule</mat-icon> {{ getRuntime() }}</span>
+          <div class="genres">
+            @for (genre of m.genres; track genre.id) {
+              <span class="genre-tag">{{ genre.name }}</span>
+            }
           </div>
 
           <p class="overview">{{ m.overview }}</p>
 
-          <button mat-raised-button
-                  [color]="isFavorite ? 'warn' : 'primary'"
-                  (click)="toggleFavorite()"
-                  class="fav-btn">
+          <button mat-raised-button [color]="isFavorite ? 'warn' : 'accent'" class="fav-btn" (click)="toggleFavorite()">
             <mat-icon>{{ isFavorite ? 'favorite' : 'favorite_border' }}</mat-icon>
-            {{ isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos' }}
+            {{ isFavorite ? 'En favoritos' : 'Añadir a favoritos' }}
           </button>
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- ── CUERPO: reparto + sidebar ── -->
+  <div class="body-layout">
+
+    <!-- Columna principal: reparto -->
+    <div class="main-col">
+      @if (cast().length > 0) {
+        <h2 class="section-title">Reparto principal</h2>
+        <div class="cast-grid">
+          @for (actor of cast(); track actor.id) {
+            <div class="actor-card">
+              <img class="actor-photo"
+                [src]="actor.profile_path
+                  ? 'https://image.tmdb.org/t/p/w185' + actor.profile_path
+                  : 'https://placehold.co/185x278?text=Sin+foto'"
+                [alt]="actor.name" />
+              <div class="actor-info">
+                <span class="actor-name">{{ actor.name }}</span>
+                <span class="actor-character">{{ actor.character }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Columna lateral: metadata -->
+    <aside class="sidebar">
+      <div class="sidebar-item">
+        <span class="sidebar-label">Estado</span>
+        <span class="sidebar-value">{{ statusLabel(m.status) }}</span>
+      </div>
+      <div class="sidebar-item">
+        <span class="sidebar-label">Idioma original</span>
+        <span class="sidebar-value">{{ languageName(m.original_language) }}</span>
+      </div>
+      <div class="sidebar-item">
+        <span class="sidebar-label">Presupuesto</span>
+        <span class="sidebar-value">{{ formatCurrency(m.budget) }}</span>
+      </div>
+      <div class="sidebar-item">
+        <span class="sidebar-label">Ingresos</span>
+        <span class="sidebar-value">{{ formatCurrency(m.revenue) }}</span>
+      </div>
+
+      @if (keywords().length > 0) {
+        <div class="sidebar-item keywords-item">
+          <span class="sidebar-label">Palabras clave</span>
+          <div class="keywords">
+            @for (kw of keywords(); track kw.id) {
+              <span class="keyword-tag">{{ kw.name }}</span>
+            }
+          </div>
+        </div>
+      }
+    </aside>
+
   </div>
 }
