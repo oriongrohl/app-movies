@@ -34,7 +34,7 @@ export class LoginComponent {
   private snackBar = inject(MatSnackBar);
   private http = inject(HttpClient);
 
-  step = signal<Step>('username');
+  step = signal<Step>('username'); // se inicializa a username
   hidePassword = signal(true);
   errorMsg = signal('');
 

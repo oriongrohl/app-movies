@@ -129,7 +129,7 @@ export class MoviesService {
       params: this.p({ query: name }),
     }).pipe(
       map(res => {
-        const match = res.results.find(p => p.known_for_department === department)
+        const match = res.results.find(p => p.known_for_department === department) // known for department es el campo que TMDB usa para indicar el departamento principal de una persona
           ?? res.results[0];
         return match ? match.id : null;
       })

@@ -81,13 +81,13 @@ export class UsersPageComponent implements OnInit {
     });
   }
 
-  startCreate(): void {
+  startCreate(): void { // Nuevo usuario
     this.showCreateForm.set(true);
     this.editingUser.set(null);
     this.createForm.reset({ rol: 'user', habilitado: 1 });
   }
 
-  cancelCreate(): void {
+  cancelCreate(): void { // Cancel
     this.showCreateForm.set(false);
     this.createForm.reset();
   }
@@ -96,8 +96,8 @@ export class UsersPageComponent implements OnInit {
     if (this.createForm.invalid) return;
     this.http.post<UsuarioSGE>(`${this.api}/usuarios`, this.createForm.value).subscribe({
       next: user => {
-        this.users.update(u => [...u, user]);
-        this.cancelCreate();
+        this.users.update(u => [...u, user]); // ... nuevo array (operador spread) con los usuarios anteriores + el nuevo usuario añadido, para evitar mutar el array original lo cual es problemático para la detección de cambios en Angular
+        this.cancelCreate(); // se cierra y resetea el form
         this.snackBar.open('Usuario creado correctamente', 'Cerrar', { duration: 3000 });
       },
       error: err => this.snackBar.open(err.error?.detail ?? 'Error al crear usuario', 'Cerrar', { duration: 3000 }),
