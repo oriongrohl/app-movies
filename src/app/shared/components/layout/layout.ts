@@ -6,6 +6,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { AuthService } from '../../../core/services/auth.service';
 
 interface NavItem {
@@ -34,6 +35,7 @@ interface NavItem {
 })
 export class LayoutComponent {
   auth = inject(AuthService);
+  private snackBar = inject(MatSnackBar);
 
   sidenavOpen = signal(true);
 
@@ -44,7 +46,14 @@ export class LayoutComponent {
   ];
 
   get visibleItems(): NavItem[] {
-    return this.navItems.filter(item => !item.adminOnly || this.auth.isAdmin());
+    return this.navItems;
+  }
+
+  onNavClick(item: NavItem, event: Event): void {
+    if (item.adminOnly && !this.auth.isAdmin()) {
+      event.preventDefault();
+      this.snackBar.open('No tienes permisos de administrador para esta ruta', 'Cerrar', { duration: 3000 });
+    }
   }
 
   toggleSidenav(): void {

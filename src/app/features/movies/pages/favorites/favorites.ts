@@ -44,9 +44,9 @@ export class FavoritesComponent implements OnInit {
     this.loadDetails();
   }
 
-  private loadDetails(): void {
+  private loadDetails(): void { // en pagina favoritos carga los detalles de cada pelicula favorita
     const ids = this.favoritesService.favoriteIds();
-    if (ids.length === 0) { this.loading.set(false); return; }
+    if (ids.length === 0) { this.loading.set(false); return; } 
 
     const requests = ids.map(id =>
       this.moviesService.getMovieDetails(id).pipe(catchError(() => of(null)))

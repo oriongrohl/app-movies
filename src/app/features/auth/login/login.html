@@ -21,6 +21,10 @@
           }
         </mat-form-field>
 
+        @if (errorMsg()) {
+          <p class="error-msg">{{ errorMsg() }}</p>
+        }
+
         <button mat-raised-button color="primary" type="submit"
                 class="full-width" [disabled]="usernameForm.invalid">
           Siguiente
@@ -45,8 +49,8 @@
           <mat-label>Contraseña</mat-label>
           <mat-icon matPrefix>lock</mat-icon>
           <input matInput formControlName="password"
-                 [type]="hidePassword() ? 'password' : 'text'"
-                 autocomplete="current-password" />
+                [type]="hidePassword() ? 'password' : 'text'"
+                autocomplete="current-password" />
           <button mat-icon-button matSuffix type="button"
                   (click)="hidePassword.set(!hidePassword())">
             <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>

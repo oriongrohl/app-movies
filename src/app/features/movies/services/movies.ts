@@ -41,7 +41,7 @@ export class MoviesService {
   }
 
   // ── Home: 4 secciones ──────────────────────────────────────────
-  loadHome(): void {
+    loadHome(): void {
     this.loading.set(true);
     this.error.set(null);
     this.searchMode.set(false);
@@ -57,12 +57,12 @@ export class MoviesService {
     let done = 0;
 
     endpoints.forEach(({ title, url }) => {
-      this.http.get<MoviesResponse>(url, { params: this.p() }).subscribe({
+      this.http.get<MoviesResponse>(url, { params: this.p() }).subscribe({ // MoviesResponse es la interfaz que mapea la respuesta de TMDB para estas consultas
         next: res => {
-          results.push({ title, movies: res.results.slice(0, 20) });
-          if (++done === endpoints.length) {
-            this.sections.set(endpoints.map(e => results.find(r => r.title === e.title)!));
-            this.loading.set(false);
+          results.push({ title, movies: res.results.slice(0, 20) }); // Limitar a 20 por sección
+          if (++done === endpoints.length) { 
+            this.sections.set(endpoints.map(e => results.find(r => r.title === e.title)!)); // Ordenar según el orden original de endpoints
+            this.loading.set(false); // loading set estaba en true desde el inicio de loadHome para indicar carga, se pone false al terminar la última sección
           }
         },
         error: () => {
@@ -79,7 +79,7 @@ export class MoviesService {
   // ── Géneros ────────────────────────────────────────────────────
   loadGenres(): void {
     if (this.genres().length) return;
-    this.http.get<{ genres: Genre[] }>(`${this.base}/genre/movie/list`, { params: this.p() })
+    this.http.get<{ genres: Genre[] }>(`${this.base}/genre/movie/list`, { params: this.p() }) 
       .subscribe({ next: r => this.genres.set(r.genres), error: () => {} });
   }
 
@@ -89,7 +89,7 @@ export class MoviesService {
     this.error.set(null);
     this.searchMode.set(true);
 
-    // Si hay título y solo título → searchMovies directo
+    // Si hay título y solo título -> searchMovies directo
     if (filters.title && !filters.genreId && !filters.directorName && !filters.actorName) {
       this.http.get<MoviesResponse>(`${this.base}/search/movie`, {
         params: this.p({ query: filters.title }),
@@ -101,20 +101,20 @@ export class MoviesService {
     }
 
     // Resolver IDs de persona (director y/o actor en paralelo)
-    const directorId$ = filters.directorName
-      ? this.findPerson(filters.directorName, 'Directing')
+    const directorId$ = filters.directorName // $ = observable 
+      ? this.findPerson(filters.directorName, 'Directing') // si hay directorName se llama a findPerson para buscar su ID
       : of(null);
     const actorId$ = filters.actorName
       ? this.findPerson(filters.actorName, 'Acting')
       : of(null);
 
     forkJoin([directorId$, actorId$]).pipe(
-      switchMap(([directorId, actorId]) => {
+      switchMap(([directorId, actorId]) => { // Si mientras espera llega una nueva búsqueda, cancela la anterior. y luego ejecuta la función con esos resultados. Si durante la espera llega una nueva búsqueda, switchMap cancela la anterior y empieza de nuevo con la nueva búsqueda, evitando así resultados desactualizados.
         let params = this.p({ sort_by: 'popularity.desc' });
         if (filters.genreId)  params = params.set('with_genres', filters.genreId);
         if (directorId)       params = params.set('with_crew',   directorId);
         if (actorId)          params = params.set('with_cast',   actorId);
-        // Título combinado con discover (filtro de texto TMDB)
+        // Título combinado con discover(actor, genero, director) -> filtro de texto TMDB
         if (filters.title)    params = params.set('with_text_query', filters.title);
         return this.http.get<MoviesResponse>(`${this.base}/discover/movie`, { params });
       })

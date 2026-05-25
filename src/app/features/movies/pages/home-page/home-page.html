@@ -6,9 +6,9 @@
       <mat-label>Buscar por título...</mat-label>
       <mat-icon matPrefix>search</mat-icon>
       <input matInput
-             [ngModel]="titleQuery()"
-             (ngModelChange)="titleQuery.set($event)"
-             (keyup.enter)="search()" />
+            [ngModel]="titleQuery()"
+            (ngModelChange)="titleQuery.set($event)"
+            (keyup.enter)="search()" />
       @if (titleQuery()) {
         <button mat-icon-button matSuffix (click)="titleQuery.set(''); search()">
           <mat-icon>close</mat-icon>
@@ -53,10 +53,10 @@
         <mat-label>Director</mat-label>
         <mat-icon matPrefix>movie_creation</mat-icon>
         <input matInput
-               [ngModel]="directorQuery()"
-               (ngModelChange)="directorQuery.set($event)"
-               (keyup.enter)="search()"
-               placeholder="ej: Christopher Nolan" />
+              [ngModel]="directorQuery()"
+              (ngModelChange)="directorQuery.set($event)"
+              (keyup.enter)="search()"
+              placeholder="ej: Christopher Nolan" />
         @if (directorQuery()) {
           <button mat-icon-button matSuffix (click)="directorQuery.set('')">
             <mat-icon>close</mat-icon>
@@ -69,10 +69,10 @@
         <mat-label>Actor / Actriz</mat-label>
         <mat-icon matPrefix>person</mat-icon>
         <input matInput
-               [ngModel]="actorQuery()"
-               (ngModelChange)="actorQuery.set($event)"
-               (keyup.enter)="search()"
-               placeholder="ej: Meryl Streep" />
+              [ngModel]="actorQuery()"
+              (ngModelChange)="actorQuery.set($event)"
+              (keyup.enter)="search()"
+              placeholder="ej: Meryl Streep" />
         @if (actorQuery()) {
           <button mat-icon-button matSuffix (click)="actorQuery.set('')">
             <mat-icon>close</mat-icon>

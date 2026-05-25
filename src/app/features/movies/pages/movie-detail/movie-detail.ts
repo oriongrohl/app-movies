@@ -33,7 +33,7 @@ export class MovieDetailComponent implements OnInit {
   favoritesService = inject(FavoritesService);
   private snackBar = inject(MatSnackBar);
 
-  movie = signal<MovieDetails | null>(null);
+  movie = signal<MovieDetails | null>(null); // en movie details los signals son del componente (no de la app entera) pq solo se usan aqui. si se pusieran en un servicio innecesariamente se complicaria la gestion
   cast = signal<CastMember[]>([]);
   keywords = signal<{ id: number; name: string }[]>([]);
   loading = signal(true);
@@ -54,9 +54,9 @@ export class MovieDetailComponent implements OnInit {
   ngOnInit(): void {
     this.favoritesService.loadFavorites();
     this.moviesService.getMovieDetails(this.movieId).subscribe({
-      next: detail => {
-        this.movie.set(detail);
-        this.loading.set(false);
+      next: detail => { // Cargar detalles de la película que tiene formato MovieDetails, si se carga correctamente se asigna a la señal movie, lo que hará que la vista se actualice con los detalles, si hay error se muestra mensaje de error y se oculta el spinner de carga
+        this.movie.set(detail); // set es para actualizar el valor de la señal movie, lo que disparará la actualización de la vista con los nuevos detalles
+        this.loading.set(false); // loading se pone en false porque ya se han cargado los detalles, aunque los créditos y keywords se cargan después, el detalle es lo principal para mostrar la película, si hay error en créditos o keywords se muestra igual el detalle
       },
       error: () => {
         this.error.set('No se pudo cargar la película');

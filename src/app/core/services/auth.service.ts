@@ -3,6 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { environment } from '../../../environments/environment';
 
 export interface UserInfo {
@@ -27,8 +28,9 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly snackBar = inject(MatSnackBar);
 
-  private readonly TOKEN_KEY = 'sge_token';
+  private readonly TOKEN_KEY = 'token_python';
   private readonly USER_KEY = 'sge_user';
 
   private _token = signal<string | null>(this._getStorage(this.TOKEN_KEY));
@@ -36,29 +38,33 @@ export class AuthService {
 
   readonly token = this._token.asReadonly();
   readonly user = this._user.asReadonly();
-  readonly isLoggedIn = computed(() => !!this._token());
-  readonly isAdmin = computed(() => this._user()?.rol === 'admin');
 
-  private _getStorage(key: string): string | null {
+  getFreshToken(): string | null {
+    return this._getStorage(this.TOKEN_KEY);
+  }
+  readonly isLoggedIn = computed(() => !!this._token()); // si hay token esta logeado
+  readonly isAdmin = computed(() => this._user()?.rol === 'admin'); // si el rol del usuario es admin, entonces isAdmin es true, sino false
+
+  private _getStorage(key: string): string | null { // acceso a localstorage
     if (isPlatformBrowser(this.platformId)) {
-      return localStorage.getItem(key);
+      return localStorage.getItem(key); // key = token_python
     }
     return null;
   }
 
-  private _setStorage(key: string, value: string): void {
+  private _setStorage(key: string, value: string): void { // guarda el token
     if (isPlatformBrowser(this.platformId)) {
       localStorage.setItem(key, value);
     }
   }
 
-  private _removeStorage(key: string): void {
+  private _removeStorage(key: string): void { // elimina el token
     if (isPlatformBrowser(this.platformId)) {
       localStorage.removeItem(key);
     }
   }
 
-  private _loadUser(): UserInfo | null {
+  private _loadUser(): UserInfo | null { // carga la info del usuario desde localstorage, si no hay devuelve null
     const raw = this._getStorage(this.USER_KEY);
     return raw ? JSON.parse(raw) : null;
   }
@@ -82,11 +88,12 @@ export class AuthService {
     );
   }
 
-  logout(): void {
+  logout(message?: string): void {
     this._removeStorage(this.TOKEN_KEY);
     this._removeStorage(this.USER_KEY);
     this._token.set(null);
     this._user.set(null);
+    if (message) this.snackBar.open(message, 'Cerrar', { duration: 4000 });
     this.router.navigate(['/login']);
   }
 

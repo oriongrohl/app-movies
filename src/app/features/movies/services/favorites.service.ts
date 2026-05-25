@@ -33,7 +33,7 @@ export class FavoritesService {
     return this.http.post<boolean>(`${this.api}/favoritas`, { id_movie: movieId }).pipe(
       tap(() => {
         if (!this.favoriteIds().includes(movieId)) {
-          this.favoriteIds.update(ids => [...ids, movieId]);
+          this.favoriteIds.update(ids => [...ids, movieId]); // ... es para crear un nuevo array con el nuevo id añadido, evitando mutar el array original lo cual seria problemático para la detección de cambios en Angular
         }
       })
     );
